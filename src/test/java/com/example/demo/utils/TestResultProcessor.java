@@ -5,7 +5,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
+import org.junit.platform.engine.TestExecutionResult;
 import org.junit.platform.launcher.TestExecutionListener;
+import org.junit.platform.launcher.TestIdentifier;
 import org.junit.platform.launcher.TestPlan;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
@@ -13,9 +15,22 @@ import org.springframework.core.io.Resource;
 import com.example.demo.Exception.TestExecutionException;
 
 public class TestResultProcessor implements TestExecutionListener {
-	public static boolean allTestsPassed = true;
-	// 텍스트 파일이 출력되었는지 확인하기 위한 플래그
-	private static boolean isReported = false;
+
+	private final TestStatusTracker statusTracker = new TestStatusTracker();
+
+	@Override
+	public void testPlanExecutionStarted(TestPlan testPlan) {
+		// Counting total tests
+		statusTracker.incrementTotalTests();
+	}
+
+	@Override
+	public void executionFinished(TestIdentifier testIdentifier, TestExecutionResult testExecutionResult) {
+		// If the test has failed, increment the failed tests counter
+		if (testIdentifier.isTest() && testExecutionResult.getStatus().equals(TestExecutionResult.Status.FAILED)) {
+			statusTracker.incrementFailedTests();
+		}
+	}
 
 	/**
 	 * JUnit 테스트 실행 계획이 끝난 후 호출되는 메서드
@@ -23,14 +38,17 @@ public class TestResultProcessor implements TestExecutionListener {
 	 */
 	@Override
 	public void testPlanExecutionFinished(TestPlan testPlan) {
-		// 텍스트 파일이 아직 출력되지 않았다면 출력한다.
-		if (!isReported) {
+		// Create a summary of the test execution
+		TestExecutionSummary summary = new TestExecutionSummary(statusTracker.allTestsPassed());
+		summary.printSummary();
+
+		// Print text file if all tests succeeded
+		if (statusTracker.allTestsPassed()) {
 			try {
 				printTextFile();
 			} catch (IOException e) {
-				throw new TestExecutionException("Failed to print text file", e);
+				System.err.println("Error reading the text file: " + e.getMessage());
 			}
-			isReported = true;
 		}
 	}
 
