@@ -16,6 +16,7 @@ class DeliveryServiceTest {
 	@MethodSource("dateData")
 	void contextLoads(int daysFromNow, boolean expectedResult) {
 		LocalDateTime deliveryDate = LocalDateTime.now().plusDays(daysFromNow);
+		System.out.println("what is date : " + deliveryDate);
 		Delivery delivery = new Delivery(deliveryDate);
 		boolean result = deliveryService.IsDeliveryValid(delivery);
 		assertEquals(expectedResult, result);
