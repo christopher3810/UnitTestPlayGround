@@ -12,8 +12,6 @@ import org.junit.platform.launcher.TestPlan;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 
-import com.example.demo.Exception.TestExecutionException;
-
 public class TestResultProcessor implements TestExecutionListener {
 
 	private final TestStatusTracker statusTracker = new TestStatusTracker();
@@ -38,17 +36,12 @@ public class TestResultProcessor implements TestExecutionListener {
 	 */
 	@Override
 	public void testPlanExecutionFinished(TestPlan testPlan) {
-		// Create a summary of the test execution
-		TestExecutionSummary summary = new TestExecutionSummary(statusTracker.allTestsPassed());
-		summary.printSummary();
-
 		// Print text file if all tests succeeded
-		if (statusTracker.allTestsPassed()) {
-			try {
-				printTextFile();
-			} catch (IOException e) {
-				System.err.println("Error reading the text file: " + e.getMessage());
-			}
+		asciiArtFiles resultFile = statusTracker.allTestsPassed() ? asciiArtFiles.SUCCESS : asciiArtFiles.FAILURE;
+		try {
+			printTextFile(resultFile.getFileName());
+		} catch (IOException e) {
+			System.err.println("Error reading the text file: " + e.getMessage());
 		}
 	}
 
@@ -56,8 +49,8 @@ public class TestResultProcessor implements TestExecutionListener {
 	 * 텍스트 파일을 콘솔에 출력하는 메서드
 	 * @throws IOException 파일을 읽는 도중 발생할 수 있는 예외
 	 */
-	private void printTextFile() throws IOException {
-		Resource resource = new ClassPathResource("testchachu.txt");
+	private void printTextFile(String testFile) throws IOException {
+		Resource resource = new ClassPathResource(testFile);
 		try (InputStream inputStream = resource.getInputStream();
 			 BufferedReader br = new BufferedReader(new InputStreamReader(inputStream))) {
 			String line;
